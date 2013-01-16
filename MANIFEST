@@ -20,3 +20,4 @@ t/request.t
 t/client.t
 t/helpers.t
 t/models.t
+META.yml                                 Module meta-data (added by MakeMaker)
