@@ -1,13 +1,14 @@
 package Reddit::Client;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 $VERSION = eval $VERSION;
 
+use strict;
+use warnings;
 use Carp;
+
 use Data::Dumper   qw/Dumper/;
 use JSON           qw//;
-use LWP::UserAgent qw//;
-use HTTP::Request  qw//;
 use File::Spec     qw//;
 use Digest::MD5    qw/md5_hex/;
 use POSIX          qw/strftime/;
@@ -388,9 +389,10 @@ sub fetch_links {
     }
 
     $subreddit = subreddit($subreddit);
-    $args = [$view];
+
+    my $args = [$view];
     push @$args, $subreddit if $subreddit;
-    
+
     my $result = $self->api_json_request(
         api      => ($subreddit ? API_LINKS_FRONT : API_LINKS_OTHER),
         args     => $args,
@@ -413,9 +415,9 @@ sub delete_item {
     my ($self, %param) = @_;
     my $name = $param{name} || croak 'Expected "name"';
     $self->require_login;
-    
+
     DEBUG('Delete post/comment %s', $name);
-    
+
     my $result = $self->api_json_request(api => API_DEL, data => { id => $name });
     return 1;
 }

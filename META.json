@@ -22,7 +22,9 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : "0"
+            "IO::Capture::Stderr" : "0",
+            "Test::MockModule" : "0",
+            "Test::More" : "0"
          }
       },
       "configure" : {
@@ -33,16 +35,13 @@
       "runtime" : {
          "requires" : {
             "HTTP::Request" : "0",
-            "IO::Capture::Stderr" : "0",
             "JSON" : "0",
             "LWP::UserAgent" : "0",
             "List::Util" : "0",
-            "Test::MockModule" : "0",
-            "Test::More" : "0",
             "URI::Encode" : "0"
          }
       }
    },
    "release_status" : "stable",
-   "version" : "0.05"
+   "version" : "0.06"
 }
