@@ -1,6 +1,6 @@
 package Reddit::Client;
 
-our $VERSION = '0.06';
+our $VERSION = '0.7';
 $VERSION = eval $VERSION;
 
 use strict;
@@ -93,7 +93,7 @@ $API[API_DEL        ] = ['POST', '/api/del'       ];
 sub DEBUG {
     if ($DEBUG) {
 	    my ($format, @args) = @_;
-	    my $ts  = strftime "%a %b %e %H:%M:%S %Y", localtime;
+	    my $ts  = strftime "%Y-%m-%d %H:%M:%S", localtime;
 	    my $msg = sprintf $format, @args;
 	    chomp $msg;
 	    printf STDERR "[%s] [ %s ]\n", $ts, $msg;
@@ -391,7 +391,7 @@ sub fetch_links {
     $subreddit = subreddit($subreddit);
 
     my $args = [$view];
-    push @$args, $subreddit if $subreddit;
+    unshift @$args, $subreddit if $subreddit;
 
     my $result = $self->api_json_request(
         api      => ($subreddit ? API_LINKS_FRONT : API_LINKS_OTHER),
@@ -561,7 +561,7 @@ Reddit::Client - A perl wrapper for Reddit
 
 =head1 VERSION
 
-Version 0.01
+Version 0.07
 
 =head1 SYNOPSIS
 
