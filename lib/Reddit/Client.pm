@@ -1,6 +1,6 @@
 package Reddit::Client;
 
-our $VERSION = '0.7';
+our $VERSION = '0.8';
 $VERSION = eval $VERSION;
 
 use strict;
@@ -92,11 +92,11 @@ $API[API_DEL        ] = ['POST', '/api/del'       ];
 
 sub DEBUG {
     if ($DEBUG) {
-	    my ($format, @args) = @_;
-	    my $ts  = strftime "%Y-%m-%d %H:%M:%S", localtime;
-	    my $msg = sprintf $format, @args;
-	    chomp $msg;
-	    printf STDERR "[%s] [ %s ]\n", $ts, $msg;
+        my ($format, @args) = @_;
+        my $ts  = strftime "%Y-%m-%d %H:%M:%S", localtime;
+        my $msg = sprintf $format, @args;
+        chomp $msg;
+        printf STDERR "[%s] [ %s ]\n", $ts, $msg;
     }
 }
 
@@ -110,7 +110,7 @@ sub subreddit {
         if ($subject eq '') { # front page
             return '';
         } else {              # subreddit
-	        return $subject;
+            return $subject;
         }
     } else { # fail
         return;
@@ -125,11 +125,18 @@ use fields (
     'modhash',      # store session modhash
     'cookie',       # store user cookie
     'session_file', # path to session file
+    'user_agent',   # user agent string
 );
 
 sub new {
     my ($class, %param) = @_;
     my $self = fields::new($class);
+
+    if (not exists $param{user_agent}) {
+        carp "Reddit::Client->new: user_agent required in future version.";
+        $param{user_agent} = $UA;
+    }
+    $self->{user_agent} = $param{user_agent};
 
     if ($param{session_file}) {
         $self->{session_file} = $param{session_file};
@@ -149,7 +156,7 @@ sub request {
     $path =~ s/^\/+//;
 
     my $request = Reddit::Client::Request->new(
-        user_agent => $UA,
+        user_agent => $self->{user_agent},
         url        => sprintf('%s/%s', $BASE_URL, $path),
         method     => $method,
         query      => $query,
@@ -167,9 +174,9 @@ sub json_request {
 
     if ($method eq 'POST') {
         $post_data ||= {};
-	    $post_data->{api_type} = 'json';
+        $post_data->{api_type} = 'json';
     } else {
-	    $path .= '.json';
+        $path .= '.json';
     }
 
     my $response = $self->request($method, $path, $query, $post_data);
@@ -330,9 +337,9 @@ sub list_subreddits {
     defined $type || croak 'Expected $type"';
 
     $self->require_login
-	    if $type eq SUBREDDITS_MOD
-	    || $type eq SUBREDDITS_MINE
-	    || $type eq SUBREDDITS_CONTRIB;
+        if $type eq SUBREDDITS_MOD
+        || $type eq SUBREDDITS_MINE
+        || $type eq SUBREDDITS_CONTRIB;
 
     my $result = $self->api_json_request(api => API_SUBREDDITS, args => [$type]);
     return {
@@ -383,9 +390,9 @@ sub fetch_links {
 
     my $query  = {};
     if ($before || $after || $limit) {
-	    $query->{limit}  = $limit  if defined $limit;
-	    $query->{before} = $before if defined $before;
-	    $query->{after}  = $after  if defined $after;
+        $query->{limit}  = $limit  if defined $limit;
+        $query->{before} = $before if defined $before;
+        $query->{after}  = $after  if defined $after;
     }
 
     $subreddit = subreddit($subreddit);
@@ -559,16 +566,15 @@ __END__
 
 Reddit::Client - A perl wrapper for Reddit
 
-=head1 VERSION
-
-Version 0.07
-
 =head1 SYNOPSIS
 
     use Reddit::Client;
 
     my $session_file = '~/.reddit';
-    my $reddit       = Reddit::Client->new(session_file => $session_file);
+    my $reddit       = Reddit::Client->new(
+        session_file => $session_file,
+        user_agent   => 'MyApp/1.0',
+    );
 
     unless ($reddit->is_logged_in) {
         $reddit->login('someone', 'secret');
@@ -597,24 +603,24 @@ For more information about the Reddit API, see L<https://github.com/reddit/reddi
 
 =head1 CONSTANTS
 
-	VIEW_HOT            "Hot" links feed
-	VIEW_NEW            "New" links feed
-	VIEW_CONTROVERSIAL  "Controversial" links feed
-	VIEW_TOP            "Top" links feed
-	
-	VIEW_DEFAULT        Default feed if not specified (VIEW_HOT)
-	DEFAULT_LIMIT       The default number of links to be retried (25)
-	
-	VOTE_UP             Up vote
-	VOTE_DOWN           Down vote
-	VOTE_NONE           "Un" vote
+    VIEW_HOT            "Hot" links feed
+    VIEW_NEW            "New" links feed
+    VIEW_CONTROVERSIAL  "Controversial" links feed
+    VIEW_TOP            "Top" links feed
 
-	SUBREDDITS_HOME     List reddits on the homepage
-	SUBREDDITS_POPULAR  List popular reddits
-	SUBREDDITS_NEW      List new reddits
-	SUBREDDITS_MINE     List reddits for which the logged in user is subscribed
-	SUBREDDITS_CONTRIB  List reddits for which the logged in user is a contributor
-	SUBREDDITS_MOD      List reddits for which the logged in user is a moderator
+    VIEW_DEFAULT        Default feed if not specified (VIEW_HOT)
+    DEFAULT_LIMIT       The default number of links to be retried (25)
+
+    VOTE_UP             Up vote
+    VOTE_DOWN           Down vote
+    VOTE_NONE           "Un" vote
+
+    SUBREDDITS_HOME     List reddits on the homepage
+    SUBREDDITS_POPULAR  List popular reddits
+    SUBREDDITS_NEW      List new reddits
+    SUBREDDITS_MINE     List reddits for which the logged in user is subscribed
+    SUBREDDITS_CONTRIB  List reddits for which the logged in user is a contributor
+    SUBREDDITS_MOD      List reddits for which the logged in user is a moderator
 
 =head1 GLOBALS
 
@@ -623,6 +629,7 @@ For more information about the Reddit API, see L<https://github.com/reddit/reddi
 =item $UA
 
 This is the user agent string, and defaults to C<Reddit::Client/$VERSION>.
+NOTE: This is now deprecated in favor of the user_agent argument to new().
 
 
 =item $DEBUG
@@ -636,12 +643,13 @@ When set to true, outputs a small amount of debugging information.
 
 =over
 
-=item new(session_file => ...)
+=item new(user_agent => ..., session_file => ...)
 
-Begins a new or loads an existing reddit session. If C<session_file> is
-provided, it will be read and parsed as JSON. If session data is found, it
-is restored. Otherwise, a new session is started.
-
+Begins a new or loads an existing reddit session. The C<user_agent> argument
+will be required in a future release. Omitting it will generate a warning.
+If C<session_file> is provided, it will be read and parsed as JSON. If
+session data is found, it is restored. Otherwise, a new session is started.
+Session data does not restore the user_agent string of the original session.
 
 =item is_logged_in
 
